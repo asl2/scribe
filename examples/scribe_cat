@@ -62,7 +62,7 @@ if result == scribe.ResultCode.OK:
 elif result == scribe.ResultCode.TRY_LATER:
   print >> sys.stderr, "TRY_LATER"
   sys.exit(84)  # 'T'
-elif result == scribe.ResultCode.AUTHENTICATION_FAILTED:
+elif result == scribe.ResultCode.AUTHENTICATION_FAILED:
   print >> sys.stderr, "AUTHENTICATION FAILED"
   sys.exit(84)  # 'A'
 
