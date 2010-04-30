@@ -233,6 +233,14 @@ const char* scribeHandler::statusAsString(fb_status status) {
   }
 }
 
+void scribeHandler::getCredentials(std::string& username, std::string& password)
+{
+  scribeHandlerLock.acquireRead();
+  username = this->username;
+  password = this->password;
+  scribeHandlerLock.release();
+}
+
 
 // Should be called while holding a writeLock on scribeHandlerLock
 bool scribeHandler::createCategoryFromModel(
@@ -409,10 +417,19 @@ void scribeHandler::addMessage(
 }
 
 
-ResultCode scribeHandler::Log(const vector<LogEntry>&  messages) {
+ResultCode scribeHandler::Log(const vector<LogEntry>&  messages, const Authentication& credentials) {
   ResultCode result;
 
   scribeHandlerLock.acquireRead();
+  // obviously pluggable authentication would be
+  // nice, and you should only use cleartext authentication
+  // like this if you know what you're doing
+  if (credentials.user != username ||
+      credentials.password != password) {
+    result = AUTHENTICATION_FAILED;
+    goto end;
+  }
+
 
   if (throttleRequest(messages)) {
     result = TRY_LATER;
@@ -594,6 +611,10 @@ void scribeHandler::initialize() {
         throw runtime_error("invalid value for num_thrift_server_threads");
       }
     }
+
+    config.getString("username", username);
+    config.getString("password", password);
+
 
     // Build a new map of stores, and move stores from the old map as
     // we find them in the config file. Any stores left in the old map

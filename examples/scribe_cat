@@ -25,12 +25,16 @@ from scribe import scribe
 from thrift.transport import TTransport, TSocket
 from thrift.protocol import TBinaryProtocol
 
-if len(sys.argv) == 2:
+if len(sys.argv) == 4:
   category = sys.argv[1]
+  user = sys.argv[2]
+  password = sys.argv[3]
   host = '127.0.0.1'
   port = 1463
-elif len(sys.argv) == 4 and sys.argv[1] == '-h':
+elif len(sys.argv) == 6 and sys.argv[1] == '-h':
   category = sys.argv[3]
+  user = sys.argv[4]
+  password = sys.argv[5]
   host_port = sys.argv[2].split(':')
   host = host_port[0]
   if len(host_port) > 1:
@@ -38,7 +42,7 @@ elif len(sys.argv) == 4 and sys.argv[1] == '-h':
   else:
     port = 1463
 else:
-  sys.exit('usage (message is stdin): scribe_cat [-h host[:port]] category')
+  sys.exit('usage (message is stdin): scribe_cat [-h host[:port]] category user password')
 
 log_entry = scribe.LogEntry(category=category, message=sys.stdin.read())
 
@@ -47,8 +51,10 @@ transport = TTransport.TFramedTransport(socket)
 protocol = TBinaryProtocol.TBinaryProtocol(trans=transport, strictRead=False, strictWrite=False)
 client = scribe.Client(iprot=protocol, oprot=protocol)
 
+authentication = scribe.Authentication(user, password)
+
 transport.open()
-result = client.Log(messages=[log_entry])
+result = client.Log(messages=[log_entry], credentials = authentication)
 transport.close()
 
 if result == scribe.ResultCode.OK:
@@ -56,5 +62,9 @@ if result == scribe.ResultCode.OK:
 elif result == scribe.ResultCode.TRY_LATER:
   print >> sys.stderr, "TRY_LATER"
   sys.exit(84)  # 'T'
+elif result == scribe.ResultCode.AUTHENTICATION_FAILTED:
+  print >> sys.stderr, "AUTHENTICATION FAILED"
+  sys.exit(84)  # 'A'
+
 else:
   sys.exit("Unknown error code.")

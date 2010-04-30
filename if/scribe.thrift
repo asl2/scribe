@@ -26,8 +26,10 @@ namespace perl Scribe.Thrift
 enum ResultCode
 {
   OK,
-  TRY_LATER
+  TRY_LATER,
+  AUTHENTICATION_FAILED
 }
+
 
 struct LogEntry
 {
@@ -35,7 +37,23 @@ struct LogEntry
   2:  string message
 }
 
+
+/*
+ Currently scribe uses thrift TNonBlockingServer, which doesn't seem
+to let the processor have access to per-client identity, and uses
+a single global processor.  Thus, reauthenticate with each logging call.
+Yes, this is wasteful.
+*/
+
+struct Authentication {
+  1:  string user,
+  2:  string password,
+}
+
+/* Use 255 tag for authentication to help avoid clashes with future
+mainline developments, or other branches */
 service scribe extends fb303.FacebookService
 {
-  ResultCode Log(1: list<LogEntry> messages);
+  ResultCode Log(1: list<LogEntry> messages, 255: Authentication credentials);
 }
+

@@ -265,6 +265,8 @@ bool scribeConn::send(boost::shared_ptr<logentry_vector_t> messages) {
   // This is because thrift doesn't support vectors of pointers,
   // but we need to use them internally to avoid even more copies.
   std::vector<LogEntry> msgs;
+  Authentication credentials;
+  g_Handler->getCredentials(credentials.user, credentials.password);
   msgs.reserve(size);
   for (logentry_vector_t::iterator iter = messages->begin();
        iter != messages->end();
@@ -273,7 +275,7 @@ bool scribeConn::send(boost::shared_ptr<logentry_vector_t> messages) {
   }
   ResultCode result = TRY_LATER;
   try {
-    result = resendClient->Log(msgs);
+    result = resendClient->Log(msgs, credentials);
 
     if (result == OK) {
       if (g_Handler) {

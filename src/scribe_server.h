@@ -42,7 +42,7 @@ class scribeHandler : virtual public scribe::thrift::scribeIf,
   void initialize();
   void reinitialize();
 
-  scribe::thrift::ResultCode Log(const std::vector<scribe::thrift::LogEntry>& messages);
+  scribe::thrift::ResultCode Log(const std::vector<scribe::thrift::LogEntry>& messages, const scribe::thrift::Authentication& credentials);
 
   void getVersion(std::string& _return) {_return = "2.2";}
   facebook::fb303::fb_status getStatus();
@@ -54,6 +54,9 @@ class scribeHandler : virtual public scribe::thrift::scribeIf,
 
   // number of threads processing new Thrift connections
   size_t numThriftServerThreads;
+  void getCredentials(std::string& username, std::string& password);
+
+
 
  private:
   unsigned long checkPeriod; // periodic check interval for all contained stores
@@ -92,6 +95,9 @@ class scribeHandler : virtual public scribe::thrift::scribeIf,
   scribeHandler();
   scribeHandler(const scribeHandler& rhs);
   const scribeHandler& operator=(const scribeHandler& rhs);
+
+  std::string username;
+  std::string password;
 
  protected:
   bool throttleDeny(int num_messages); // returns true if overloaded
